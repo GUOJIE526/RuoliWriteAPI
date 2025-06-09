@@ -1,0 +1,6 @@
+@RuoliAPI_HostAddress = http://localhost:5064
+
+GET {{RuoliAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
