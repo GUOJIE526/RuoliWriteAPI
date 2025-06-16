@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using RuoliAPI.Models;
 using System.Net.Http.Headers;
 using System.Text;
@@ -22,21 +23,27 @@ namespace RuoliAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] dynamic body)
+        public async Task<IActionResult> Post([FromBody] JObject body)
         {
-            foreach (var evt in body.events)
+            var events = body["events"] as JArray;
+            if (events == null)
             {
-                string type = evt.type;
+                return BadRequest();
+            }
+
+            foreach (var evt in events)
+            {
+                string type = evt["type"]?.ToString();
                 if (type == "follow")
                 {
-                    string replyToken = evt.replyToken;
+                    string replyToken = evt["replyToken"]?.ToString() ?? string.Empty;
                     await ReplyOpenNotifyButton(replyToken);
                 }
                 else if (type == "message")
                 {
-                    string text = evt.message.text;
-                    string lineUserId = evt.source.userId;
-                    string replyToken = evt.replyToken;
+                    string text = evt["message"]?["text"]?.ToString() ?? string.Empty;
+                    string lineUserId = evt["source"]?["userId"]?.ToString() ?? string.Empty;
+                    string replyToken = evt["replyToken"]?.ToString() ?? string.Empty;
 
                     if (text == "開啟通知")
                     {
