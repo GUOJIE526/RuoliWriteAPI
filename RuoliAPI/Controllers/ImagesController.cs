@@ -3,6 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
 using RuoliAPI.Models;
 using System.Security.Claims;
+using System.Net.Http.Headers;
+using System.Text;
+using Newtonsoft.Json;
 
 namespace RuoliAPI.Controllers
 {
@@ -11,10 +14,14 @@ namespace RuoliAPI.Controllers
     public class ImagesController : Controller
     {
         private readonly CalligraphyContext _context;
+        private readonly IHttpClientFactory _clientFactory;
+        private readonly string _channelAccessToken;
 
-        public ImagesController(CalligraphyContext context)
+        public ImagesController(CalligraphyContext context, IHttpClientFactory clientFactory, IConfiguration configuration)
         {
             _context = context;
+            _clientFactory = clientFactory;
+            _channelAccessToken = configuration["LineToken:ChannelAccessToken"] ?? string.Empty;
         }
 
         //GET api/images
@@ -82,6 +89,9 @@ namespace RuoliAPI.Controllers
                 try
                 {
                     await _context.SaveChangesAsync();
+
+                    await NotifyAuthorAsync(artwork);
+
                     return Ok();
                 }
                 catch (DbUpdateException ex)
@@ -90,9 +100,40 @@ namespace RuoliAPI.Controllers
                     return BadRequest($"Error adding like: {ex.Message}");
                 }
             }
-            else 
-            {                 
+            else
+            {
                 return Ok("今日已按過讚");
+            }
+        }
+
+        private async Task NotifyAuthorAsync(TbExhArtwork artwork)
+        {
+            if (artwork.Writer == null)
+            {
+                return;
+            }
+
+            var lineIds = await _context.TbExhLine
+                .Where(l => l.UserId == artwork.Writer && l.LineUserId != null)
+                .Select(l => l.LineUserId!)
+                .ToListAsync();
+
+            foreach (var lineId in lineIds)
+            {
+                var payload = new
+                {
+                    to = lineId,
+                    messages = new[]
+                    {
+                        new { type = "text", text = $"您的 {artwork.Title} 已收到一個新讚!" }
+                    }
+                };
+
+                var client = _clientFactory.CreateClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _channelAccessToken);
+                var json = JsonConvert.SerializeObject(payload);
+                using var content = new StringContent(json, Encoding.UTF8, "application/json");
+                await client.PostAsync("https://api.line.me/v2/bot/message/push", content);
             }
         }
     }
