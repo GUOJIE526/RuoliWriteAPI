@@ -13,7 +13,7 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        // ²Ä¤T­Óºô§}¬O¨Ï¥Î ngrok ¥Í¦¨ªº¥~³¡¥i³X°Ýºô§}(«eºÝ³¡¤À)/ by.shan shan
+builder.Services.AddControllers().AddNewtonsoftJson();
         policy.WithOrigins("http://localhost:3000").AllowAnyMethod().AllowAnyHeader().AllowCredentials();
     });
 });
@@ -23,7 +23,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-//IHttpFactory µù¤J
+//IHttpFactory è¨»å…¥
 builder.Services.AddHttpClient();
 
 var app = builder.Build();
