@@ -14,14 +14,14 @@ namespace RuoliAPI.Controllers
     public class ImagesController : Controller
     {
         private readonly CalligraphyContext _context;
-        private readonly IHttpClientFactory _clientFactory;
         private readonly string _channelAccessToken;
+        private readonly string _lineUser;
 
-        public ImagesController(CalligraphyContext context, IHttpClientFactory clientFactory, IConfiguration configuration)
+        public ImagesController(CalligraphyContext context, IConfiguration configuration)
         {
             _context = context;
-            _clientFactory = clientFactory;
             _channelAccessToken = configuration["LineToken:ChannelAccessToken"] ?? string.Empty;
+            _lineUser = configuration["LineToken:userId"] ?? string.Empty;
         }
 
         //GET api/images
@@ -65,6 +65,7 @@ namespace RuoliAPI.Controllers
         [HttpPost("{artworkId}/likes", Name = "AddArtworkLike")]
         public async Task<IActionResult> AddArtworkLike(Guid artworkId)
         {
+            isRock.LineBot.Bot bot = new isRock.LineBot.Bot(_channelAccessToken);
             var artwork = await _context.TbExhArtwork.FindAsync(artworkId);
             if (artwork == null)
             {
@@ -89,6 +90,8 @@ namespace RuoliAPI.Controllers
                 try
                 {
                     await _context.SaveChangesAsync();
+                    bot.PushMessage(_lineUser, new Uri($"https://ruolibackend.com/{artwork.ImageUrl}"));
+                    bot.PushMessage(_lineUser, $"您的作品《{artwork.Title}》獲得了一個新的讚 !");
                     return Ok();
                 }
                 catch (DbUpdateException ex)
