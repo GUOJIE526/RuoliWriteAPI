@@ -89,9 +89,6 @@ namespace RuoliAPI.Controllers
                 try
                 {
                     await _context.SaveChangesAsync();
-
-                    await NotifyAuthorAsync(artwork);
-
                     return Ok();
                 }
                 catch (DbUpdateException ex)
@@ -103,37 +100,6 @@ namespace RuoliAPI.Controllers
             else
             {
                 return Ok("今日已按過讚");
-            }
-        }
-
-        private async Task NotifyAuthorAsync(TbExhArtwork artwork)
-        {
-            if (artwork.Writer == null)
-            {
-                return;
-            }
-
-            var lineIds = await _context.TbExhLine
-                .Where(l => l.UserId == artwork.Writer && l.LineUserId != null)
-                .Select(l => l.LineUserId!)
-                .ToListAsync();
-
-            foreach (var lineId in lineIds)
-            {
-                var payload = new
-                {
-                    to = lineId,
-                    messages = new[]
-                    {
-                        new { type = "text", text = $"您的 {artwork.Title} 已收到一個新讚!" }
-                    }
-                };
-
-                var client = _clientFactory.CreateClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _channelAccessToken);
-                var json = JsonConvert.SerializeObject(payload);
-                using var content = new StringContent(json, Encoding.UTF8, "application/json");
-                await client.PostAsync("https://api.line.me/v2/bot/message/push", content);
             }
         }
     }
