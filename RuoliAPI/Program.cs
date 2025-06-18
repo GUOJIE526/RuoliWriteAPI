@@ -1,3 +1,5 @@
+using Calligraphy.Services;
+using Calligraphy.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using RuoliAPI.Models;
 
@@ -24,6 +26,9 @@ builder.Services.AddSwaggerGen();
 
 //IHttpFactory 註入
 builder.Services.AddHttpClient();
+//GetClientIPService 註入
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IClientIpService, GetClientIPService>();
 
 var app = builder.Build();
 
