@@ -6,6 +6,8 @@ using System.Security.Claims;
 using System.Net.Http.Headers;
 using System.Text;
 using Newtonsoft.Json;
+using Calligraphy.Services.Interfaces;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 
 namespace RuoliAPI.Controllers
 {
@@ -16,12 +18,14 @@ namespace RuoliAPI.Controllers
         private readonly CalligraphyContext _context;
         private readonly string _channelAccessToken;
         private readonly string _lineUser;
+        private readonly IClientIpService _getIP;
 
-        public ImagesController(CalligraphyContext context, IConfiguration configuration)
+        public ImagesController(CalligraphyContext context, IConfiguration configuration, IClientIpService getIP)
         {
             _context = context;
             _channelAccessToken = configuration["LineToken:ChannelAccessToken"] ?? string.Empty;
             _lineUser = configuration["LineToken:userId"] ?? string.Empty;
+            _getIP = getIP;
         }
 
         //GET api/images
@@ -40,7 +44,8 @@ namespace RuoliAPI.Controllers
                     i.ImageUrl,
                     i.Description,
                     i.Dimensions,
-                    i.Material
+                    i.Material,
+                    i.Views
                 }).OrderByDescending(i => i.CreatedYear)
                 .ToListAsync();
 
@@ -49,6 +54,32 @@ namespace RuoliAPI.Controllers
                 return NotFound("No images found.");
             }
             return Ok(imgs);
+        }
+
+        //PUT瀏覽人次
+        [HttpPut(Name = "AddArtworkView")]
+        public async Task<IActionResult> AddArtworkView([FromBody] Guid artworkId)
+        {
+            var artwork = await _context.TbExhArtwork.FindAsync(artworkId);
+            if (artwork == null)
+            {
+                return NotFound("Artwork not found.");
+            }
+            var writer = await _context.TbExhUser
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.UserId == artwork.Writer);
+            artwork.Views = (artwork.Views ?? 0) + 1;
+            artwork.ModifyFrom = _getIP.GetClientIP() ?? null;
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+            catch (DbUpdateException ex)
+            {
+                //處理資料庫更新異常
+                return BadRequest($"Error adding view: {ex.Message}");
+            }
         }
 
         //回傳該作品的讚數

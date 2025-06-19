@@ -13,7 +13,7 @@ public partial class TbExhLine
 
     public bool Notify { get; set; }
 
-    public bool? Unfollow { get; set; }
+    public bool Unfollow { get; set; }
 
     public bool? Block { get; set; }
 
