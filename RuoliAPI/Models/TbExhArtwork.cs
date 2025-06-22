@@ -25,7 +25,7 @@ public partial class TbExhArtwork
 
     public string? Dimensions { get; set; }
 
-    public int? Views { get; set; }
+    public int Views { get; set; }
 
     public bool IsVisible { get; set; }
 

@@ -68,7 +68,7 @@ namespace RuoliAPI.Controllers
             var writer = await _context.TbExhUser
                 .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.UserId == artwork.Writer);
-            artwork.Views = (artwork.Views ?? 0) + 1;
+            artwork.Views = artwork.Views + 1;
             artwork.ModifyFrom = _getIP.GetClientIP() ?? null;
             try
             {
