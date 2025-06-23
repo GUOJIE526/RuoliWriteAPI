@@ -106,9 +106,10 @@ namespace RuoliAPI.Controllers
 
             //同一個ip一天只能按一次讚
             var ip = _getIP.GetClientIP() ?? "";
+            var today = TimeHelper.GetTaipeiTimeNowOffset(DateTimeOffset.Now).Date;
             var existingLike = await _context.TbExhLike
                 .AsNoTracking()
-                .FirstOrDefaultAsync(l => l.ArtworkId == artworkId && l.IpAddress == ip && l.CreateDate.Date == TimeHelper.GetTaipeiTimeNowOffset(DateTimeOffset.Now).Date);
+                .FirstOrDefaultAsync(l => l.ArtworkId == artworkId && l.IpAddress == ip && l.CreateDate.Date == today);
             if (existingLike == null)
             {
                 var like = new TbExhLike
