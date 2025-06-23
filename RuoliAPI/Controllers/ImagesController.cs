@@ -8,6 +8,7 @@ using System.Text;
 using Newtonsoft.Json;
 using Calligraphy.Services.Interfaces;
 using Microsoft.EntityFrameworkCore.Query.Internal;
+using Calligraphy.Services;
 
 namespace RuoliAPI.Controllers
 {
@@ -104,18 +105,18 @@ namespace RuoliAPI.Controllers
             }
 
             //同一個ip一天只能按一次讚
-            var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "";
+            var ip = _getIP.GetClientIP() ?? "";
             var existingLike = await _context.TbExhLike
                 .AsNoTracking()
-                .FirstOrDefaultAsync(l => l.ArtworkId == artworkId && l.IpAddress == ip && l.CreateDate.Date == DateTimeOffset.Now.Date);
+                .FirstOrDefaultAsync(l => l.ArtworkId == artworkId && l.IpAddress == ip && l.CreateDate.Date == TimeHelper.GetTaipeiTimeNowOffset(DateTimeOffset.Now).Date);
             if (existingLike == null)
             {
                 var like = new TbExhLike
                 {
                     ArtworkId = artworkId,
-                    IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
-                    CreateFrom = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
-                    Creator = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ""
+                    IpAddress = _getIP.GetClientIP() ?? "",
+                    CreateFrom = _getIP.GetClientIP() ?? "",
+                    Creator = _getIP.GetClientIP() ?? ""
                 };
                 _context.TbExhLike.Add(like);
                 try

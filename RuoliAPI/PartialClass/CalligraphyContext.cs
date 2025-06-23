@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Calligraphy.Services;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace RuoliAPI.Models
@@ -38,11 +39,11 @@ namespace RuoliAPI.Models
             {
                 if (entry.State == EntityState.Added)
                 {
-                    entry.Property("CreateDate").CurrentValue = DateTimeOffset.Now;
+                    entry.Property("CreateDate").CurrentValue = TimeHelper.GetTaipeiTimeNowOffset(DateTimeOffset.Now);
                 }
                 else if (entry.State == EntityState.Modified)
                 {
-                    entry.Property("ModifyDate").CurrentValue = DateTimeOffset.Now;
+                    entry.Property("ModifyDate").CurrentValue = TimeHelper.GetTaipeiTimeNowOffset(DateTimeOffset.Now);
                 }
             }
         }
