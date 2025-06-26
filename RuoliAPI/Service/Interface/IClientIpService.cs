@@ -1,4 +1,4 @@
-﻿namespace Calligraphy.Services.Interfaces
+﻿namespace RuoliAPI.Services.Interfaces
 {
     public interface IClientIpService
     {

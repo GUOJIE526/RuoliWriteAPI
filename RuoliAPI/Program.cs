@@ -1,7 +1,7 @@
-using Calligraphy.Services;
-using Calligraphy.Services.Interfaces;
+using RuoliAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using RuoliAPI.Models;
+using RuoliAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +15,7 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("http://localhost:3000").AllowAnyMethod().AllowAnyHeader().AllowCredentials();
+        policy.WithOrigins("http://localhost:3000", "http://45.130.167.27:8080", "https://ruoliwrite.com", "https://www.ruoliwrite.com").AllowAnyMethod().AllowAnyHeader().AllowCredentials();
     });
 });
 
@@ -29,6 +29,8 @@ builder.Services.AddHttpClient();
 //GetClientIPService 註入
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IClientIpService, GetClientIPService>();
+//LogService 註入
+builder.Services.AddScoped<ILogService, LogService>();
 
 var app = builder.Build();
 

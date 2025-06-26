@@ -1,7 +1,7 @@
-﻿using Calligraphy.Services.Interfaces;
+﻿using RuoliAPI.Services.Interfaces;
 using System.Net;
 
-namespace Calligraphy.Services
+namespace RuoliAPI.Services
 {
     public class GetClientIPService : IClientIpService
     {
@@ -16,7 +16,7 @@ namespace Calligraphy.Services
         public string GetClientIP()
         {
             var context = _httpContextAccessor.HttpContext;
-            if (context == null) return "Unknown";
+            if (context == null) return "";
 
             var remoteIp = context.Connection.RemoteIpAddress?.ToString();
             var forwardedFor = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();

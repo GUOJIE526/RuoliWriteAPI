@@ -6,7 +6,7 @@ using System.Security.Claims;
 using System.Net.Http.Headers;
 using System.Text;
 using Newtonsoft.Json;
-using Calligraphy.Services.Interfaces;
+using RuoliAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using Calligraphy.Services;
 
@@ -20,13 +20,15 @@ namespace RuoliAPI.Controllers
         private readonly string _channelAccessToken;
         private readonly string _lineUser;
         private readonly IClientIpService _getIP;
+        private readonly ILogService _log;
 
-        public ImagesController(CalligraphyContext context, IConfiguration configuration, IClientIpService getIP)
+        public ImagesController(CalligraphyContext context, IConfiguration configuration, IClientIpService getIP, ILogService log)
         {
             _context = context;
             _channelAccessToken = configuration["LineToken:ChannelAccessToken"] ?? string.Empty;
             _lineUser = configuration["LineToken:userId"] ?? string.Empty;
             _getIP = getIP;
+            _log = log;
         }
 
         //GET api/images
@@ -83,6 +85,22 @@ namespace RuoliAPI.Controllers
             }
         }
 
+        //取得所有作品讚數 回傳json
+        [HttpGet("likes", Name = "GetAllArtworkLikes")]
+        public async Task<IActionResult> GetAllArtworkLikes()
+        {
+            var artworkLikes = await _context.TbExhLike
+                .AsNoTracking()
+                .GroupBy(l => l.ArtworkId)
+                .Select(g => new
+                {
+                    ArtworkId = g.Key,
+                    LikeCount = g.Count()
+                })
+                .ToListAsync();
+            return Ok(artworkLikes);
+        }
+
         //回傳該作品的讚數
         [HttpGet("{artworkId}/likes", Name = "GetArtworkLikes")]
         public async Task<IActionResult> GetArtworkLikes(Guid artworkId)
@@ -113,7 +131,7 @@ namespace RuoliAPI.Controllers
             if (existingLike == null)
             {
                 var like = new TbExhLike
-                {
+                {  
                     ArtworkId = artworkId,
                     IpAddress = _getIP.GetClientIP() ?? "",
                     CreateFrom = _getIP.GetClientIP() ?? "",
@@ -123,7 +141,8 @@ namespace RuoliAPI.Controllers
                 try
                 {
                     await _context.SaveChangesAsync();
-                    bot.PushMessage(_lineUser, new Uri($"https://ruolibackend.com/{artwork.ImageUrl}"));
+                    await _log.LogAsync(Guid.Empty, "AddLike", $"作品: {artwork.Title}, 來自 {ip} 的讚", _getIP.GetClientIP() ?? "");
+                    bot.PushMessage(_lineUser, new Uri($"https://ruolibackend.com{artwork.ImageUrl}"));
                     bot.PushMessage(_lineUser, $"您的作品《{artwork.Title}》獲得了一個新的讚 !");
                     return Ok();
                 }
