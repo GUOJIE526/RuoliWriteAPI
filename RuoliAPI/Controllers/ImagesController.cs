@@ -78,17 +78,14 @@ namespace RuoliAPI.Controllers
         }
 
         //POST瀏覽人次
-        [HttpPost(Name = "AddArtworkView")]
-        public async Task<IActionResult> AddArtworkView([FromBody] Guid artworkId)
+        [HttpPost("{artworkId}/views", Name = "AddArtworkView")]
+        public async Task<IActionResult> AddArtworkView([FromRoute] Guid artworkId)
         {
             var artwork = await _context.TbExhArtwork.FindAsync(artworkId);
             if (artwork == null)
             {
                 return NotFound("Artwork not found.");
             }
-            var writer = await _context.TbExhUser
-                .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.UserId == artwork.Writer);
             artwork.Views = artwork.Views + 1;
             artwork.ModifyFrom = _getIP.GetClientIP() ?? null;
             try
