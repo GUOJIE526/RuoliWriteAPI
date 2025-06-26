@@ -33,12 +33,28 @@ namespace RuoliAPI.Controllers
 
         //GET api/images
         [HttpGet(Name = "GetImage")]
-        public async Task<IActionResult> GetImage()
+        public async Task<IActionResult> GetImage([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            //讀取所有isVisivble是true的圖片
-            var imgs = await _context.TbExhArtwork
+            if (pageNumber < 1)
+            {
+                pageNumber = 1;
+            }
+            if (pageSize < 1)
+            {
+                pageSize = 10;
+            }
+
+            // 讀取所有 isVisible 是 true 的圖片
+            var query = _context.TbExhArtwork
                 .AsNoTracking()
-                .Where(i => i.IsVisible)
+                .Where(i => i.IsVisible);
+
+            var totalCount = await query.CountAsync();
+
+            var imgs = await query
+                .OrderByDescending(i => i.CreatedYear)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .Select(i => new
                 {
                     i.ArtworkId,
@@ -49,18 +65,20 @@ namespace RuoliAPI.Controllers
                     i.Dimensions,
                     i.Material,
                     i.Views
-                }).OrderByDescending(i => i.CreatedYear)
+                })
                 .ToListAsync();
 
             if (imgs == null || imgs.Count == 0)
             {
-                return NotFound("No images found.");
+                return NotFound("No images found for the specified page.");
             }
-            return Ok(imgs);
+
+            var paginatedResult = new PaginatedResult<object>(imgs, totalCount, pageNumber, pageSize);
+            return Ok(paginatedResult);
         }
 
-        //PUT瀏覽人次
-        [HttpPut(Name = "AddArtworkView")]
+        //POST瀏覽人次
+        [HttpPost(Name = "AddArtworkView")]
         public async Task<IActionResult> AddArtworkView([FromBody] Guid artworkId)
         {
             var artwork = await _context.TbExhArtwork.FindAsync(artworkId);
@@ -131,7 +149,7 @@ namespace RuoliAPI.Controllers
             if (existingLike == null)
             {
                 var like = new TbExhLike
-                {  
+                {
                     ArtworkId = artworkId,
                     IpAddress = _getIP.GetClientIP() ?? "",
                     CreateFrom = _getIP.GetClientIP() ?? "",
