@@ -43,6 +43,7 @@
   "pageNumber": 1,
   "pageSize": 10
 }
+```
 
 👤 Author
 Developed by Jacob Hong
