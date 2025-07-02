@@ -45,6 +45,6 @@
 }
 ```
 
-👤 Author
+##👤 Author
 Developed by Jacob Hong
 📧 Contact: hungkaojay@gmail.com
